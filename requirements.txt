@@ -1,6 +1,7 @@
-langgraph>=0.0.60
-google-generativeai>=0.3.0
-python-dotenv>=1.0.0
-Flask==2.3.3
+flask==2.3.3
+flask-cors==4.0.0
+google-generativeai==0.3.1
+langgraph==0.0.60
 python-dotenv==1.0.0
 langchain==0.0.350
+gunicorn==21.2.0

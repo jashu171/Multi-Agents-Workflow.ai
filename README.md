@@ -1,4 +1,4 @@
-# Jashu Multi-Agent Workflow 🤖
+#  Multi-Agent Workflow 🤖
 
 An intelligent multi-agent AI system built with **LangGraph** that breaks down complex tasks into specialized subtasks using advanced workflow orchestration. The system features a beautiful web interface and sophisticated agent coordination for handling complex queries through iterative task refinement and reflection.
 

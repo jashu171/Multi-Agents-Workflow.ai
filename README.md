@@ -1,32 +1,131 @@
-
 # Jashu Multi-Agent Workflow 🤖
 
-An intelligent multi-agent AI system that breaks down complex tasks into specialized subtasks using LangGraph and Google's Gemini AI. The system features a beautiful web interface and sophisticated agent orchestration for handling complex queries.
+An intelligent multi-agent AI system built with **LangGraph** that breaks down complex tasks into specialized subtasks using advanced workflow orchestration. The system features a beautiful web interface and sophisticated agent coordination for handling complex queries through iterative task refinement and reflection.
 
 ![AI Powered](https://img.shields.io/badge/AI-Powered-blue?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.8+-green?style=for-the-badge)
 ![LangGraph](https://img.shields.io/badge/LangGraph-Latest-orange?style=for-the-badge)
 ![Gemini](https://img.shields.io/badge/Gemini-AI-purple?style=for-the-badge)
+![LangChain](https://img.shields.io/badge/LangChain-Integrated-red?style=for-the-badge)
+
+## 🎯 Objective
+
+This project implements a sophisticated multi-agent pipeline that:
+
+- **Splits user queries** into manageable sub-tasks using a specialized PlanAgent
+- **Iteratively refines tasks** through modify, delete, and add operations
+- **Solves tasks efficiently** using ToolAgent with specialized capabilities  
+- **Implements feedback loops** and reflection mechanisms for reliability
+- **Integrates multiple language models** and tools through LangGraph architecture
+
+## 🧠 Understanding LangGraph Architecture
+
+### What is LangGraph?
+
+**LangGraph** is a library for building stateful, multi-actor applications with Large Language Models (LLMs). It extends LangChain's capabilities by providing a graph-based approach to workflow orchestration.
+
+### Core Concepts
+
+#### 🔗 **Nodes**
+Nodes represent individual agents or processing units in the workflow:
+- **PlanAgent Node**: Decomposes complex queries into subtasks
+- **TaskSelector Node**: Chooses the next pending task for execution
+- **ToolAgent Node**: Executes tasks using specialized tools and capabilities
+- **ReflectionAgent Node**: Evaluates results and provides feedback
+- **FinalizationAgent Node**: Compiles and formats final results
+
+#### ⚡ **Edges** 
+Edges define the flow and transitions between nodes:
+- **Conditional Edges**: Route based on state conditions (task status, completion criteria)
+- **Normal Edges**: Direct connections between sequential processing steps
+- **Feedback Edges**: Enable iterative refinement and reflection loops
+
+#### 📊 **State Management**
+LangGraph maintains a centralized state that flows through all nodes:
+```python
+@dataclass
+class WorkflowState:
+    user_query: str                    # Original user input
+    subtasks: Dict[str, SubTask]       # Generated and managed subtasks
+    task_order: List[str]              # Execution sequence
+    current_task_id: Optional[str]     # Active task identifier
+    outer_iteration: int               # Planning cycle count
+    inner_iteration: int               # Task execution attempts
+    feedback_queue: List[TaskFeedback] # Pending evaluations
+    workflow_complete: bool            # Completion status
+    final_result: str                  # Compiled output
+```
+
+## 🏗️ System Architecture
+
+### Visual Workflow Graph
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   START         │───▶│   PlanAgent      │───▶│  TaskSelector   │
+│   (User Query)  │    │   (Decompose)    │    │  (Choose Next)  │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                ▲                       │
+                                │                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│ ReflectionAgent │◀───│   ToolAgent      │◀───│  Agent Dispatch │
+│ (Evaluate &     │    │   (Execute)      │    │  (Route Task)   │
+│  Feedback)      │    └──────────────────┘    └─────────────────┘
+└─────────────────┘             │                       
+         │                      ▼                       
+         │              ┌──────────────────┐            
+         └─────────────▶│  Finalization    │            
+                        │  (Compile)       │            
+                        └──────────────────┘            
+                                 │
+                                 ▼
+                        ┌──────────────────┐
+                        │   END            │
+                        │  (Final Result)  │
+                        └──────────────────┘
+```
+
+### LangGraph Integration Flow
+
+1. **State Initialization**: User query creates initial WorkflowState
+2. **Node Execution**: Each agent processes state and returns updated version
+3. **Edge Routing**: Conditional logic determines next node based on state
+4. **Iteration Control**: Feedback loops enable task refinement
+5. **State Persistence**: Complete workflow state maintained throughout process
 
 ## ✨ Features
 
-- **🧠 Intelligent Task Decomposition**: Automatically breaks down complex queries into manageable subtasks
-- **🤖 Specialized Agents**: Multiple agent types with specific capabilities
-  - Research Agent (web search, document analysis)
-  - Analysis Agent (data processing, statistical analysis)
-  - Creative Agent (text generation, content creation)
-  - Technical Agent (calculations, code execution)
-- **🔄 Adaptive Workflow**: Self-correcting system with feedback loops and reflection
-- **🎯 Visual Interface**: Modern, responsive web UI with real-time progress tracking
-- **📊 Comprehensive Reporting**: Detailed execution summaries and statistics
-- **⚡ Fallback System**: Works even without API keys using intelligent fallbacks
+### 🤖 **Multi-Agent Orchestration**
+- **PlanAgent**: Intelligent task decomposition using Gemini LLM
+- **ToolAgent**: Specialized execution with capability-based routing
+- **ReflectionAgent**: Quality assurance and iterative improvement
+- **TaskSelector**: Optimal task prioritization and sequencing
+
+### 🔄 **Advanced Workflow Management**
+- **Stateful Processing**: LangGraph maintains context across all operations
+- **Conditional Routing**: Dynamic path selection based on task status
+- **Feedback Loops**: Continuous improvement through reflection cycles
+- **Error Recovery**: Robust handling with retry mechanisms
+
+### 🛠️ **LangChain Integration**
+- **Tool Management**: Seamless integration of LangChain tools
+- **Memory Systems**: Persistent context across agent interactions
+- **Chain Composition**: Complex reasoning through agent collaboration
+- **Custom Tools**: Extensible tool ecosystem for domain-specific tasks
+
+### 🚀 **Gemini LLM Integration**
+- **API Key Management**: Secure credential handling
+- **Model Selection**: Flexible LLM model configuration
+- **Response Processing**: Intelligent parsing and validation
+- **Fallback Systems**: Graceful degradation when API unavailable
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Python 3.8 or higher
-- Google Gemini API key (optional - fallback mode available)
+- Google Gemini API key (required for full functionality)
+- LangChain and LangGraph dependencies
 
 ### Installation
 
@@ -43,13 +142,18 @@ An intelligent multi-agent AI system that breaks down complex tasks into special
 
 3. **Set up environment variables**
    ```bash
-   # Create .env file
+   # Create .env file with your API credentials
    echo "GOOGLE_API_KEY=your_gemini_api_key_here" > .env
+   echo "LANGCHAIN_API_KEY=your_langchain_key_here" >> .env
+   echo "LANGCHAIN_TRACING_V2=true" >> .env
    ```
-   
-   > **Note**: If you don't have a Gemini API key, the system will automatically use fallback mode
 
-4. **Run the application**
+4. **Verify LangGraph installation**
+   ```bash
+   python -c "import langgraph; print('LangGraph successfully installed')"
+   ```
+
+5. **Run the application**
    
    **Web Interface:**
    ```bash
@@ -62,243 +166,242 @@ An intelligent multi-agent AI system that breaks down complex tasks into special
    python agentic_workflow.py
    ```
 
-## 💻 Usage
+## 💻 Usage Examples
 
-### Web Interface
+### Complex Task Processing
 
-1. Open the web application at `http://localhost:5000`
-2. Enter your complex task or question in the text area
-3. Click "🚀 Process with AI Agents"
-4. Watch as the system breaks down your task and processes it with specialized agents
-5. View comprehensive results with detailed subtask breakdown
+The system excels at breaking down complex, multi-faceted queries:
 
-### Command Line Interface
+**Business Strategy Example:**
+```
+Input: "Create a comprehensive go-to-market strategy for an AI-powered fitness app"
 
-```bash
-python agentic_workflow.py
+LangGraph Processing:
+├── PlanAgent: Decomposes into market research, competitor analysis, pricing strategy
+├── ToolAgent: Executes research using web search and analysis tools
+├── ReflectionAgent: Evaluates completeness and suggests refinements
+└── Finalization: Compiles comprehensive strategy document
 ```
 
-Enter your query when prompted, and the system will process it through the multi-agent workflow.
-
-### Example Queries
-
-- "Plan a complete marketing strategy for a new eco-friendly product"
-- "Analyze the pros and cons of different programming languages for web development"
-- "Create a comprehensive business plan for a tech startup"
-- "Research and summarize the latest trends in artificial intelligence"
-
-## 🏗️ Architecture
-
-### Core Components
-
+**Technical Analysis Example:**
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Plan Agent    │───▶│  Task Selector   │───▶│ Agent Dispatch  │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         ▲                                              │
-         │                                              ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│ Reflection      │◀───│   Tool Agent     │◀───│  Specialized    │
-│ Agent           │    │                  │    │  Agents         │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
+Input: "Compare cloud platforms for a microservices architecture migration"
+
+Workflow Execution:
+├── Task 1: Research AWS, Azure, GCP capabilities
+├── Task 2: Analyze cost structures and pricing models
+├── Task 3: Evaluate security and compliance features
+├── Task 4: Compare development and deployment tools
+└── Final: Detailed comparison with recommendations
 ```
 
-### Agent Types
+## 🔧 LangGraph Configuration
 
-- **🧠 Plan Agent**: Orchestrates workflow, creates and manages subtasks
-- **🎯 Task Selector**: Chooses next pending task for execution
-- **🚀 Agent Dispatch**: Routes tasks to appropriate specialized agents
-- **⚙️ Tool Agent**: Executes tasks using available tools
-- **🔍 Reflection Agent**: Evaluates results and provides feedback
-- **📋 Finalization**: Compiles and formats final results
-
-### Workflow States
-
-- **PENDING**: Task waiting to be processed
-- **IN_PROGRESS**: Task currently being executed
-- **COMPLETED**: Task successfully finished
-- **FAILED**: Task failed (with retry mechanism)
-
-## 🛠️ Configuration
-
-### Environment Variables
-
-```bash
-# Required for full functionality
-GOOGLE_API_KEY=your_gemini_api_key
-
-# Optional configurations
-MAX_ITERATIONS=5
-MAX_TASK_ATTEMPTS=3
-```
-
-### Customization
-
-The system is highly customizable. You can:
-
-- Add new agent types by modifying the `CAPABILITIES` dictionary
-- Adjust retry logic and iteration limits
-- Customize the web interface styling
-- Extend tool capabilities for different agent types
-
-## 📁 Project Structure
-
-```
-jashu-multi-agent-workflow/
-├── README.md                 # This file
-├── requirements.txt          # Python dependencies
-├── .env                     # Environment variables (create this)
-├── agentic_workflow.py      # Core workflow engine
-├── app.py                   # Flask web application (create this)
-├── index.html              # Web interface
-├── static/                 # Static assets (if needed)
-└── templates/              # HTML templates (if using Flask templates)
-```
-
-## 🔧 API Reference
-
-### WorkflowState
-
-Main state object that flows through the system:
+### Node Definitions
 
 ```python
-@dataclass
-class WorkflowState:
-    user_query: str                    # Original user query
-    subtasks: Dict[str, SubTask]       # Generated subtasks
-    task_order: List[str]              # Execution order
-    current_task_id: Optional[str]     # Currently processing task
-    outer_iteration: int               # Planning iterations
-    inner_iteration: int               # Task execution iterations
-    feedback_queue: List[TaskFeedback] # Pending feedback
-    workflow_complete: bool            # Completion status
-    final_result: str                  # Compiled results
+from langgraph.graph import StateGraph
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+# Initialize LLM
+llm = ChatGoogleGenerativeAI(
+    model="gemini-pro",
+    google_api_key=os.getenv("GOOGLE_API_KEY")
+)
+
+# Define workflow graph
+workflow = StateGraph(WorkflowState)
+
+# Add nodes
+workflow.add_node("plan_agent", plan_agent_node)
+workflow.add_node("task_selector", task_selector_node)  
+workflow.add_node("tool_agent", tool_agent_node)
+workflow.add_node("reflection_agent", reflection_agent_node)
+workflow.add_node("finalization", finalization_node)
+
+# Define edges with conditions
+workflow.add_conditional_edges(
+    "plan_agent",
+    route_after_planning,
+    {
+        "continue": "task_selector",
+        "end": "finalization"
+    }
+)
 ```
 
-### SubTask
-
-Individual task representation:
+### State Transitions
 
 ```python
-@dataclass
-class SubTask:
-    id: str                    # Unique identifier
-    description: str           # Task description
-    status: TaskStatus         # Current status
-    result: str               # Execution result
-    agent_type: str           # Assigned agent type
-    tools: List[str]          # Available tools
-    attempts: int             # Execution attempts
-    max_attempts: int         # Maximum retry attempts
+def route_after_planning(state: WorkflowState) -> str:
+    """Conditional routing based on planning results"""
+    if not state.subtasks:
+        return "end"
+    if state.outer_iteration >= MAX_ITERATIONS:
+        return "end"
+    return "continue"
+
+def route_after_execution(state: WorkflowState) -> str:
+    """Route based on task execution status"""
+    if state.workflow_complete:
+        return "finalization"
+    if state.feedback_queue:
+        return "reflection_agent"
+    return "task_selector"
 ```
+
+## 🛠️ Agent Capabilities
+
+### PlanAgent Capabilities
+- **Task Decomposition**: Breaking complex queries into subtasks
+- **Dependency Analysis**: Understanding task relationships
+- **Resource Allocation**: Assigning appropriate tools and agents
+- **Timeline Estimation**: Predicting execution complexity
+
+### ToolAgent Specializations
+- **Research Agent**: Web search, document analysis, information gathering
+- **Analysis Agent**: Data processing, statistical analysis, pattern recognition
+- **Creative Agent**: Content generation, writing, ideation
+- **Technical Agent**: Code execution, calculations, technical problem-solving
+
+### ReflectionAgent Functions
+- **Quality Assessment**: Evaluating task completion quality
+- **Gap Analysis**: Identifying missing information or incomplete results
+- **Improvement Suggestions**: Recommending task modifications
+- **Workflow Optimization**: Suggesting process improvements
+
+## 📊 Performance Monitoring
+
+### Built-in Metrics
+
+The system tracks comprehensive performance data:
+
+- **Execution Metrics**: Processing time, iteration counts, success rates
+- **Agent Performance**: Individual agent utilization and effectiveness
+- **Task Analytics**: Complexity scoring, completion patterns
+- **Resource Usage**: API calls, token consumption, error rates
+
+### LangSmith Integration
+
+Enable advanced monitoring with LangSmith:
+
+```bash
+export LANGCHAIN_TRACING_V2=true
+export LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
+export LANGCHAIN_API_KEY="your_langsmith_key"
+export LANGCHAIN_PROJECT="jashu-workflow"
+```
+
+## 🔒 Security & Best Practices
+
+### API Key Management
+- Store credentials in environment variables
+- Use `.env` files for local development
+- Implement key rotation policies
+- Monitor API usage and rate limits
+
+### State Security
+- No persistent storage of sensitive data
+- In-memory state management only
+- Configurable data retention policies
+- Secure inter-agent communication
+
+## 🧪 Testing & Development
+
+### Unit Testing
+```bash
+# Run comprehensive test suite
+python -m pytest tests/ -v
+
+# Test specific components
+python -m pytest tests/test_langgraph_workflow.py
+python -m pytest tests/test_agent_integration.py
+```
+
+### Development Mode
+```bash
+# Enable debug logging
+export DEBUG=true
+python agentic_workflow.py --verbose
+
+# Test with sample queries
+python test_workflow.py --sample-queries
+```
+
+## 📈 Roadmap & Future Enhancements
+
+### Planned Features
+- [ ] **Advanced Graph Topologies**: Complex workflow patterns
+- [ ] **Multi-LLM Support**: Integration with multiple language models
+- [ ] **Custom Tool Development**: SDK for building specialized tools
+- [ ] **Workflow Templates**: Pre-built patterns for common use cases
+- [ ] **Real-time Collaboration**: Multi-user workflow sharing
+- [ ] **Performance Optimization**: Enhanced caching and parallel processing
+
+### LangGraph Enhancements
+- [ ] **Subgraph Support**: Nested workflow capabilities
+- [ ] **Dynamic Graph Modification**: Runtime workflow adjustments
+- [ ] **Advanced State Management**: Persistent state backends
+- [ ] **Workflow Versioning**: Change tracking and rollback capabilities
+
+## 🔧 Troubleshooting
+
+### Common LangGraph Issues
+
+**Graph Compilation Errors**
+```bash
+# Validate graph structure
+python -c "from workflow import workflow; workflow.compile()"
+```
+
+**State Management Issues**
+```bash
+# Debug state transitions
+export LANGGRAPH_DEBUG=true
+python agentic_workflow.py --debug-state
+```
+
+**API Integration Problems**
+```bash
+# Test API connectivity
+python test_gemini_connection.py
+python test_langchain_tools.py
+```
+
+## 📚 Documentation & Resources
+
+### LangGraph Documentation
+- [Official LangGraph Guide](https://python.langchain.com/docs/langgraph)
+- [State Management Patterns](https://python.langchain.com/docs/langgraph/concepts)
+- [Advanced Workflows](https://python.langchain.com/docs/langgraph/tutorials)
+
+### Integration Guides
+- [Gemini API Setup](https://ai.google.dev/tutorials/setup)
+- [LangChain Tools](https://python.langchain.com/docs/integrations/tools)
+- [Custom Agent Development](https://python.langchain.com/docs/modules/agents)
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how you can help:
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Commit your changes**: `git commit -m 'Add amazing feature'`
-4. **Push to the branch**: `git push origin feature/amazing-feature`
-5. **Open a Pull Request**
+We welcome contributions to enhance the multi-agent workflow system!
 
 ### Development Setup
-
 ```bash
-# Clone your fork
+# Fork and clone the repository
 git clone https://github.com/your-username/jashu-multi-agent-workflow.git
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
 # Install development dependencies
-pip install -r requirements.txt
-pip install pytest black flake8  # Additional dev tools
+pip install -e ".[dev]"
+pip install pytest black flake8 mypy
+
+# Run pre-commit hooks
+pre-commit install
 ```
 
-### Code Style
-
-- Follow PEP 8 guidelines
-- Use meaningful variable names
-- Add docstrings for functions and classes
-- Write tests for new features
-
-## 📊 Performance & Monitoring
-
-The system includes built-in monitoring:
-- Execution time tracking
-- Success/failure rates
-- Iteration counts
-- Task completion statistics
-
-### Metrics Dashboard
-
-Access metrics through the web interface:
-- **Success Rate**: Percentage of completed tasks
-- **Processing Time**: Total workflow duration
-- **Complexity Score**: Estimated task difficulty (1-10)
-- **Agent Utilization**: Usage statistics per agent type
-
-## 🔒 Security & Privacy
-
-- No data persistence by default
-- API keys stored in environment variables
-- Local processing (no external data sharing except API calls)
-- Configurable timeout and rate limiting
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**1. "No API key" warnings**
-```bash
-# Solution: Set your Gemini API key
-export GOOGLE_API_KEY="your_key_here"
-```
-
-**2. Import errors**
-```bash
-# Solution: Install all dependencies
-pip install -r requirements.txt
-```
-
-**3. Web interface not loading**
-```bash
-# Solution: Check if Flask is installed and port is available
-pip install Flask
-# Try different port: python app.py --port 8080
-```
-
-**4. Workflow gets stuck**
-- Check iteration limits in configuration
-- Verify API key validity
-- Review task complexity (try simpler queries first)
-
-### Debug Mode
-
-Run with debug information:
-```bash
-python -u agentic_workflow.py --debug
-```
-
-## 📈 Roadmap
-
-### Upcoming Features
-
-- [ ] **Plugin System**: Easy integration of custom agents and tools
-- [ ] **Database Integration**: Persistent workflow storage
-- [ ] **API Endpoints**: RESTful API for external integration
-- [ ] **Multi-language Support**: Interface localization
-- [ ] **Advanced Analytics**: Detailed performance metrics
-- [ ] **Collaborative Workflows**: Multi-user support
-- [ ] **Custom Agent Training**: Fine-tuning capabilities
-
-### Version History
-
-- **v1.0.0** - Initial release with core multi-agent functionality
-- **v1.1.0** - Added web interface and improved error handling
-- **v1.2.0** - Enhanced reflection system and fallback modes
+### Contribution Guidelines
+- Follow LangGraph best practices
+- Maintain comprehensive test coverage
+- Document new agent capabilities
+- Update workflow diagrams for architectural changes
 
 ## 📄 License
 
@@ -306,22 +409,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **LangGraph**: For the excellent graph-based workflow framework
-- **Google Gemini**: For powerful AI capabilities
-- **Open Source Community**: For inspiration and contributions
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/your-username/jashu-multi-agent-workflow/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/jashu-multi-agent-workflow/discussions)
-- **Email**: support@jashu-workflow.com
+- **LangGraph Team**: For the exceptional graph-based workflow framework
+- **LangChain Community**: For comprehensive tool ecosystem
+- **Google AI**: For Gemini API and advanced language capabilities
+- **Open Source Contributors**: For continuous improvement and innovation
 
 ---
 
 <div align="center">
 
-**Built with ❤️ by the Jashu Team**
+**Built with ❤️ using LangGraph, LangChain, and Gemini AI**
 
 [🌟 Star this repo](https://github.com/your-username/jashu-multi-agent-workflow) | [🍴 Fork it](https://github.com/your-username/jashu-multi-agent-workflow/fork) | [📞 Get Support](https://github.com/your-username/jashu-multi-agent-workflow/issues)
+
+**Experience the Future of Multi-Agent AI Workflows**
 
 </div>

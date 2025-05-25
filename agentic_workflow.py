@@ -27,6 +27,7 @@ class SubTask:
     description: str
     status: TaskStatus = TaskStatus.PENDING
     result: str = ""
+    summary: str = ""  # New field for summarized result
     agent_type: str = "research_agent"
     tools: List[str] = field(default_factory=lambda: ["web_search"])
     attempts: int = 0
@@ -50,6 +51,7 @@ class WorkflowState:
     feedback_queue: List[TaskFeedback] = field(default_factory=list)
     workflow_complete: bool = False
     final_result: str = ""
+    workflow_summary: str = ""  # New field for overall summary
 
 class GeminiClient:
     def __init__(self):
@@ -86,10 +88,12 @@ class GeminiClient:
                 {"description": "Generate final output", "agent_type": "creative_agent"}
             ])
         elif "execute" in prompt.lower():
-            return "Task executed successfully using available tools"
+            return "Task executed successfully using available tools with comprehensive analysis and detailed findings."
         elif "reflect" in prompt.lower():
-            return "Task completed with good quality results"
-        return "Processed successfully"
+            return "Task completed with good quality results and meets requirements"
+        elif "summarize" in prompt.lower():
+            return "Summary: Task completed successfully with key findings and actionable insights provided."
+        return "Processed successfully with detailed analysis"
 
 # Initialize global client
 gemini = GeminiClient()
@@ -137,9 +141,9 @@ class PlanAgent:
         except:
             # Fallback tasks
             tasks_data = [
-                {"description": f"Research: {state.user_query}", "agent_type": "research_agent"},
-                {"description": f"Analyze: {state.user_query}", "agent_type": "analysis_agent"},
-                {"description": f"Generate output for: {state.user_query}", "agent_type": "creative_agent"}
+                {"description": f"Research and gather comprehensive information about: {state.user_query}", "agent_type": "research_agent"},
+                {"description": f"Analyze findings and identify key patterns for: {state.user_query}", "agent_type": "analysis_agent"},
+                {"description": f"Synthesize insights and generate actionable recommendations for: {state.user_query}", "agent_type": "creative_agent"}
             ]
         
         # Create SubTask objects
@@ -163,7 +167,7 @@ class PlanAgent:
             if feedback.feedback_type == FeedbackType.MODIFY:
                 if feedback.task_id in state.subtasks:
                     task = state.subtasks[feedback.task_id]
-                    task.description += f" (Updated: {feedback.message})"
+                    task.description += f" (Enhanced: {feedback.message})"
                     task.status = TaskStatus.PENDING
                     task.attempts = 0
             
@@ -193,7 +197,7 @@ def select_next_task(state: WorkflowState) -> WorkflowState:
             if task.status == TaskStatus.PENDING:
                 state.current_task_id = task_id
                 state.inner_iteration += 1
-                print(f"🎯 Selected: {task_id}")
+                print(f"🎯 Selected: {task_id} - {task.description[:50]}...")
                 return state
     
     state.current_task_id = None
@@ -201,10 +205,10 @@ def select_next_task(state: WorkflowState) -> WorkflowState:
 
 class AgentDispatch:
     CAPABILITIES = {
-        "research_agent": ["web_search", "document_analysis"],
-        "analysis_agent": ["data_processing", "statistical_analysis"], 
-        "creative_agent": ["text_generator", "content_creation"],
-        "technical_agent": ["calculator", "code_execution"]
+        "research_agent": ["web_search", "document_analysis", "data_gathering"],
+        "analysis_agent": ["data_processing", "statistical_analysis", "pattern_recognition"], 
+        "creative_agent": ["text_generator", "content_creation", "synthesis"],
+        "technical_agent": ["calculator", "code_execution", "problem_solving"]
     }
     
     def __call__(self, state: WorkflowState) -> WorkflowState:
@@ -215,7 +219,7 @@ class AgentDispatch:
         tools = self.CAPABILITIES.get(task.agent_type, ["web_search"])
         task.tools = tools
         
-        print(f"🤖 Dispatched {task.agent_type} with tools: {tools}")
+        print(f"🤖 Dispatched {task.agent_type} with tools: {', '.join(tools[:2])}...")
         return state
 
 class ToolAgent:
@@ -229,20 +233,52 @@ class ToolAgent:
         
         print(f"⚙️ Executing {task.id} (attempt {task.attempts})")
         
-        # Execute task
-        prompt = f"""Execute this task:
+        # Execute task with enhanced prompting
+        prompt = f"""Execute this task comprehensively:
         Task: {task.description}
         Agent: {task.agent_type}
         Tools: {', '.join(task.tools)}
+        Context: {state.user_query}
         
-        Provide detailed execution result."""
+        Provide detailed, actionable results with specific insights and recommendations."""
         
         result = gemini.generate(prompt)
-        task.result = result or f"Executed using {', '.join(task.tools[:2])}"
-        task.status = TaskStatus.COMPLETED if result else TaskStatus.FAILED
         
-        print(f"📊 Result: {task.result[:60]}...")
+        if result:
+            task.result = result
+            # Generate summary of the result
+            task.summary = self._create_summary(result)
+            task.status = TaskStatus.COMPLETED
+        else:
+            task.result = f"Executed using {', '.join(task.tools[:2])} with comprehensive analysis"
+            task.summary = f"Completed {task.agent_type} analysis using {task.tools[0]}"
+            task.status = TaskStatus.FAILED
+        
+        print(f"📊 Summary: {task.summary}")
         return state
+    
+    def _create_summary(self, result: str) -> str:
+        """Create a concise summary of the task result"""
+        if len(result) <= 150:
+            return result
+        
+        # Extract key points or use first 150 characters
+        summary_prompt = f"Summarize this in 150 characters or less: {result[:500]}"
+        summary = gemini.generate(summary_prompt)
+        
+        if summary and len(summary) <= 150:
+            return summary
+        
+        # Fallback: truncate intelligently
+        sentences = result.split('. ')
+        summary = sentences[0]
+        for sentence in sentences[1:]:
+            if len(summary + '. ' + sentence) <= 147:
+                summary += '. ' + sentence
+            else:
+                break
+        
+        return summary + "..." if len(summary) < len(result) else summary
 
 class ReflectionAgent:
     def __call__(self, state: WorkflowState) -> WorkflowState:
@@ -255,10 +291,10 @@ class ReflectionAgent:
         # Generate reflection
         prompt = f"""Reflect on this task execution:
         Task: {task.description}
-        Result: {task.result}
+        Result Summary: {task.summary}
         Status: {task.status.value}
         
-        Evaluate quality and suggest improvements."""
+        Evaluate quality and suggest if improvements needed."""
         
         reflection = gemini.generate(prompt)
         
@@ -276,37 +312,60 @@ class ReflectionAgent:
                 return TaskFeedback(
                     task_id=task.id,
                     feedback_type=FeedbackType.MODIFY,
-                    message="Task failed, needs modification"
+                    message="Task needs enhancement for better results"
                 )
             else:
                 return TaskFeedback(
                     task_id=task.id,
                     feedback_type=FeedbackType.DELETE,
-                    message="Task failed multiple times"
+                    message="Task failed multiple attempts"
                 )
         
-        if "additional" in reflection.lower():
+        if "additional" in reflection.lower() or "more" in reflection.lower():
             return TaskFeedback(
                 task_id=task.id,
                 feedback_type=FeedbackType.ADD,
-                message="Needs additional work",
-                new_tasks=[f"Follow-up for {task.description}"]
+                message="Needs additional analysis",
+                new_tasks=[f"Deep-dive analysis for {task.description[:30]}..."]
             )
         
         return None
 
 def finalize_results(state: WorkflowState) -> WorkflowState:
-    """Compile final results with clear separation and full output."""
-    print("\n📋 Finalizing results ...")
+    """Create workflow summary with concise results."""
+    print("\n📋 Finalizing workflow summary...")
+    
     completed = [t for t in state.subtasks.values() if t.status == TaskStatus.COMPLETED]
+    
     if completed:
-        results = []
-        for t in completed:
-            # Do not truncate result, show full output
-            results.append(f"\n-----------------------------\n📋 Subtask: {t.description}\nStatus: {t.status.value}\nAgent: {t.agent_type}\nTools: {', '.join(t.tools)}\nResult:\n{t.result}\n-----------------------------")
-        state.final_result = "\n".join(results)
+        # Create concise summary
+        summary_parts = [
+            f"🎯 Query: {state.user_query}",
+            f"📊 Completed {len(completed)}/{len(state.subtasks)} tasks",
+            "\n🔍 Key Findings:"
+        ]
+        
+        for i, task in enumerate(completed, 1):
+            summary_parts.append(f"{i}. {task.agent_type.replace('_', ' ').title()}: {task.summary}")
+        
+        # Generate overall insights
+        insights_prompt = f"""Based on these task summaries for '{state.user_query}':
+        {chr(10).join([f"- {t.summary}" for t in completed])}
+        
+        Provide 2-3 key insights and actionable recommendations in 200 words."""
+        
+        insights = gemini.generate(insights_prompt)
+        
+        if insights:
+            summary_parts.extend(["\n💡 Key Insights:", insights])
+        
+        state.workflow_summary = "\n".join(summary_parts)
+        state.final_result = state.workflow_summary
+        
     else:
-        state.final_result = "❌ No tasks completed successfully"
+        state.workflow_summary = f"❌ Workflow incomplete - No tasks completed successfully for: {state.user_query}"
+        state.final_result = state.workflow_summary
+    
     return state
 
 # Routing functions
@@ -340,8 +399,8 @@ def route_after_reflection(state: WorkflowState) -> str:
     return "finalize" if all_done else "plan"
 
 def create_workflow() -> StateGraph:
-    """Create the agentic workflow"""
-    print("🔧 Creating workflow...")
+    """Create the enhanced agentic workflow"""
+    print("🔧 Creating Jashu Multi-Agents workflow...")
     
     workflow = StateGraph(WorkflowState)
     
@@ -378,7 +437,7 @@ def create_workflow() -> StateGraph:
     return workflow.compile()
 
 def main():
-    print("🚀 Advanced Agentic Workflow")
+    print("🚀 Jashu Multi-Agents Workflow System")
     print("=" * 50)
     
     query = input("\n💭 Enter your request: ").strip()
@@ -395,39 +454,24 @@ def main():
         
         final_state = app.invoke(initial_state, config={"recursion_limit": 100})
         
-        # Display results
+        # Display concise results
         print("\n" + "=" * 50)
-        print("📊 EXECUTION SUMMARY")
+        print("📊 WORKFLOW SUMMARY")
         print("=" * 50)
         
+        if final_state.get('workflow_summary'):
+            print(final_state['workflow_summary'])
+        
+        # Quick stats
         if final_state.get('subtasks'):
-            print("\n📋 Tasks:")
-            for task_id, task in final_state['subtasks'].items():
-                status_map = {
-                    TaskStatus.COMPLETED: "✅", TaskStatus.FAILED: "❌",
-                    TaskStatus.PENDING: "⏳", TaskStatus.IN_PROGRESS: "🔄"
-                }
-                emoji = status_map.get(task.status, "❓")
-                print(f"   {emoji} {task_id}: {task.description}")
-                if task.result:
-                    preview = task.result[:60] + "..." if len(task.result) > 60 else task.result
-                    print(f"      → {preview}")
-        
-        if final_state.get('final_result'):
-            print(f"\n🎯 FINAL RESULT:")
-            print("-" * 30)
-            print(final_state['final_result'])
-        
-        # Stats
-        completed = len([t for t in final_state.get('subtasks', {}).values() 
-                        if t.status == TaskStatus.COMPLETED])
-        total = len(final_state.get('subtasks', {}))
-        
-        print(f"\n📈 Stats:")
-        print(f"   🔄 Outer iterations: {final_state.get('outer_iteration', 0)}")
-        print(f"   🔁 Inner iterations: {final_state.get('inner_iteration', 0)}")
-        print(f"   ✅ Completed: {completed}/{total}")
-        print(f"   🎯 Status: {'Complete' if final_state.get('workflow_complete') else 'Incomplete'}")
+            completed = len([t for t in final_state['subtasks'].values() 
+                           if t.status == TaskStatus.COMPLETED])
+            total = len(final_state['subtasks'])
+            
+            print(f"\n📈 Execution Stats:")
+            print(f"   🔄 Iterations: {final_state.get('outer_iteration', 0)}")
+            print(f"   ✅ Success Rate: {completed}/{total}")
+            print(f"   🎯 Status: {'✅ Complete' if final_state.get('workflow_complete') else '⏳ Partial'}")
         
     except Exception as e:
         print(f"\n❌ Error: {e}")

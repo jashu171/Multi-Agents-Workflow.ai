@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jashu Multi-Agent Workflow</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .menu-button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            color: #64748b;
+            transition: all 0.2s ease;
+        }
+
+        .menu-button:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .plan-badge {
+            font-size: 12px;
+            color: #64748b;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: none;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .upgrade-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .welcome-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+
+        /* Input Section */
+        .input-section {
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .input-container {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 20px 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .input-container:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+        }
+
+        .message-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: none;
+            min-height: 24px;
+            max-height: 200px;
+            font-family: inherit;
+            color: #1e293b;
+            font-weight: 400;
+        }
+
+        .message-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .input-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-button {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .action-button:hover {
+            background: rgba(59, 130, 246, 0.1);
+            transform: scale(1.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: none;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 12px 24px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            margin-top: 16px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .model-selector {
+            position: absolute;
+            bottom: -45px;
+            right: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .model-name {
+            font-weight: 500;
+        }
+
+        .model-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Results Section */
+        .results-section {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 30px;
+            animation: fadeInUp 1s ease;
+        }
+
+        .results-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .results-icon {
+            font-size: 24px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .results-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .final-result {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border-left: 4px solid #3b82f6;
+            line-height: 1.6;
+            font-size: 15px;
+            white-space: pre-wrap;
+            color: #334155;
+        }
+
+        .subtasks-section {
+            margin-top: 20px;
+        }
+
+        .subtasks-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .subtask-item {
+            background: rgba(248, 250, 252, 0.8);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .subtask-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .subtask-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .subtask-id {
+            font-weight: 600;
+            color: #3b82f6;
+            font-size: 14px;
+        }
+
+        .subtask-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-completed {
+            background: rgba(34, 197, 94, 0.1);
+            color: #059669;
+        }
+
+        .status-failed {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .status-pending {
+            background: rgba(251, 191, 36, 0.1);
+            color: #d97706;
+        }
+
+        .subtask-description {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .subtask-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .subtask-result {
+            background: rgba(248, 250, 252, 0.8);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #334155;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .loading-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: #64748b;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px 16px;
+            }
+
+            .welcome-title {
+                font-size: 24px;
+            }
+
+            .input-container {
+                padding: 16px 20px;
+            }
+
+            .message-input {
+                font-size: 16px;
+            }
+
+            .results-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <button class="menu-button" id="menuButton">☰</button>
+            <div class="logo">Jashu Multi-Agent Workflow</div>
+        </div>
+        <div class="header-right">
+            <span class="plan-badge">AI Powered</span>
+            <button class="upgrade-btn">✨ Enhance</button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content" id="mainContent">
+        <div class="welcome-section">
+            <div class="welcome-icon">🤖</div>
+            <h1 class="welcome-title">Jashu's Multi-Agent AI Workflow</h1>
+            <p class="welcome-subtitle">Break down complex tasks into intelligent subtasks with specialized agents</p>
+        </div>
+
+        <div class="input-section">
+            <form class="query-form" id="queryForm">
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <button type="button" class="action-button" title="Attach">📎</button>
+                        <textarea 
+                            class="message-input" 
+                            id="messageInput" 
+                            placeholder="Describe your complex task or question..."
+                            rows="3"
+                            required
+                        ></textarea>
+                        <button type="button" class="action-button" title="Voice">🎤</button>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    🚀 Process with AI Agents
+                </button>
+                <div class="model-selector">
+                    <span class="model-name">Multi-Agent System</span>
+                    <div class="model-icon">⚡</div>
+                </div>
+            </form>
+
+            <div class="loading-indicator" id="loadingIndicator">
+                <div class="spinner"></div>
+                <span>AI agents are working on your request...</span>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-container">
+                <div class="results-header">
+                    <div class="results-icon">🎯</div>
+                    <div class="results-title">Workflow Results</div>
+                </div>
+                <div id="resultsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('queryForm');
+            const textarea = document.getElementById('messageInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContent = document.getElementById('resultsContent');
+
+            // Auto-resize textarea
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            });
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const query = textarea.value.trim();
+                if (!query) return;
+
+                // Show loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '⏳ Processing...';
+                loadingIndicator.style.display = 'flex';
+                resultsSection.style.display = 'none';
+
+                try {
+                    const response = await fetch('/process', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: query })
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        displayResults(data);
+                    } else {
+                        displayError(data.error || 'Processing failed');
+                    }
+                } catch (err) {
+                    console.error('Error:', err);
+                    displayError('Failed to connect to the AI system. Please try again.');
+                } finally {
+                    // Reset UI
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '🚀 Process with AI Agents';
+                    loadingIndicator.style.display = 'none';
+                }
+            });
+
+            function displayResults(data) {
+                let html = '';
+
+                // Display final result with comprehensive summary (800 characters)
+                if (data.final_result) {
+                    let finalResultText = data.final_result;
+                    if (finalResultText.length > 800) {
+                        // Smart truncation at sentence boundaries
+                        const truncated = finalResultText.substring(0, 800);
+                        const lastSentence = truncated.lastIndexOf('. ');
+                        if (lastSentence > 500) {
+                            finalResultText = truncated.substring(0, lastSentence + 1) + '...';
+                        } else {
+                            finalResultText = truncated + '...';
+                        }
+                    }
+
+                    html += `
+                        <div class="final-result">
+                            <strong>📋 Executive Summary:</strong><br><br>
+                            ${formatText(finalResultText)}
+                        </div>
+                    `;
+                }
+
+                // Display subtasks with expanded descriptions and results (600 characters each)
+                if (data.subtasks && Object.keys(data.subtasks).length > 0) {
+                    html += `
+                        <div class="subtasks-section">
+                            <div class="subtasks-title">
+                                🔧 Agent Tasks Breakdown
+                            </div>
+                    `;
+
+                    Object.values(data.subtasks).forEach(task => {
+                        const statusClass = `status-${task.status}`;
+                        const statusIcon = task.status === 'completed' ? '✅' : 
+                                         task.status === 'failed' ? '❌' : '⏳';
+                        
+                        // Medium-sized result (600 characters with smart truncation)
+                        let taskResult = task.result || 'No result available';
+                        if (taskResult.length > 600) {
+                            // Find the last sentence within 600 chars
+                            const truncated = taskResult.substring(0, 600);
+                            const lastSentence = truncated.lastIndexOf('. ');
+                            if (lastSentence > 400) {
+                                taskResult = truncated.substring(0, lastSentence + 1) + '...';
+                            } else {
+                                taskResult = truncated + '...';
+                            }
+                        }
+
+                        // Enhanced task description (up to 150 characters)
+                        let taskDescription = task.description;
+                        if (taskDescription.length > 150) {
+                            taskDescription = taskDescription.substring(0, 147) + '...';
+                        }
+
+                        html += `
+                            <div class="subtask-item">
+                                <div class="subtask-header">
+                                    <span class="subtask-id">${task.id.toUpperCase()}</span>
+                                    <span class="subtask-status ${statusClass}">
+                                        ${statusIcon} ${task.status.toUpperCase()}
+                                    </span>
+                                </div>
+                                <div class="subtask-description">
+                                    📌 ${taskDescription}
+                                </div>
+                                <div class="subtask-meta">
+                                    <span>🤖 Agent: ${task.agent_type.replace('_', ' ').toUpperCase()}</span>
+                                    <span>🛠️ Tools: ${task.tools ? task.tools.join(', ') : 'N/A'}</span>
+                                    <span>🔄 Attempts: ${task.attempts}/${task.max_attempts}</span>
+                                    <span>⏱️ Duration: ${task.duration || 'N/A'}</span>
+                                </div>
+                                <div class="subtask-result">
+                                    <strong>📊 Detailed Result:</strong><br><br>
+                                    ${formatText(taskResult)}
+                                    ${task.additional_info ? `<br><br><em>Additional Info: ${task.additional_info}</em>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += '</div>';
+                }
+
+                // Enhanced summary statistics with more details
+                const completedTasks = Object.values(data.subtasks || {}).filter(t => t.status === 'completed').length;
+                const failedTasks = Object.values(data.subtasks || {}).filter(t => t.status === 'failed').length;
+                const pendingTasks = Object.values(data.subtasks || {}).filter(t => t.status === 'pending').length;
+                const totalTasks = Object.keys(data.subtasks || {}).length;
+                
+                html += `
+                    <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05)); border-radius: 12px; border-left: 4px solid #3b82f6;">
+                        <strong>📈 Comprehensive Workflow Statistics:</strong><br><br>
+                        ✅ Tasks Completed: ${completedTasks}/${totalTasks}<br>
+                        ❌ Tasks Failed: ${failedTasks}<br>
+                        ⏳ Tasks Pending: ${pendingTasks}<br>
+                        🔄 Total Iterations: ${data.outer_iteration || 0}<br>
+                        🎯 Success Rate: ${totalTasks > 0 ? Math.round((completedTasks/totalTasks) * 100) : 0}%<br>
+                        ⏱️ Status: ${data.workflow_complete ? 'Complete' : 'In Progress'}<br>
+                        ${data.total_processing_time ? `🕒 Total Processing Time: ${data.total_processing_time}` : ''}
+                        ${data.complexity_score ? `📊 Task Complexity Score: ${data.complexity_score}/10` : ''}
+                    </div>
+                `;
+
+                resultsContent.innerHTML = html;
+                resultsSection.style.display = 'block';
+                
+                // Smooth scroll to results
+                setTimeout(() => {
+                    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+
+            function displayError(error) {
+                resultsContent.innerHTML = `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #dc2626; padding: 20px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
+                        <strong>Processing Error</strong><br><br>
+                        ${error}<br><br>
+                        <em>Please try again with a different query or check your connection.</em>
+                    </div>
+                `;
+                resultsSection.style.display = 'block';
+            }
+
+            function formatText(text) {
+                return text
+                    .replace(/\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/•/g, '•')
+                    .replace(/---+/g, '<hr style="border: 1px solid rgba(59, 130, 246, 0.2); margin: 12px 0;">')
+                    .replace(/`([^`]+)`/g, '<code style="background: rgba(59, 130, 246, 0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace;">$1</code>');
+            }
+        });
+    </script>
+</body>
+</html>
